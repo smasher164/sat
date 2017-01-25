@@ -59,12 +59,12 @@ func (c CNF) clone() CNF {
 }
 
 func DPLL(formula CNF) bool {
-	// empty clause
+	// empty formula
 	if len(formula) == 0 {
 		return true
 	}
 	for i := range formula {
-		// empty formula
+		// empty clause
 		if len(formula[i]) == 0 {
 			return false
 		}
