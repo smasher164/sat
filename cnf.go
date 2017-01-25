@@ -48,14 +48,27 @@ func (c CNF) String() string {
 	return s
 }
 
+// Makes a deep copy of the CNF
+func (c CNF) clone() CNF {
+	to := make(CNF, len(c), cap(c))
+	for i := range to {
+		to[i] = make(Clause, len(c[i]), cap(c[i]))
+		copy(to[i], c[i])
+	}
+	return to
+}
+
 func DPLL(formula CNF) bool {
+	// empty clause
 	if len(formula) == 0 {
 		return true
 	}
 	for i := range formula {
+		// empty formula
 		if len(formula[i]) == 0 {
 			return false
 		}
+		// unit propagation
 		if len(formula[i]) == 1 {
 			return DPLL(Simplify(formula, formula[i][0]))
 		}
@@ -66,16 +79,6 @@ func DPLL(formula CNF) bool {
 		v.Truth = !v.Truth
 		return DPLL(Simplify(formula, v))
 	}
-}
-
-// Makes a deep copy of the CNF
-func (from CNF) clone() CNF {
-	to := make(CNF, len(from), cap(from))
-	for i := range to {
-		to[i] = make(Clause, len(from[i]), cap(from[i]))
-		copy(to[i], from[i])
-	}
-	return to
 }
 
 func Simplify(formula CNF, p Literal) CNF {
