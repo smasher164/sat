@@ -3,7 +3,6 @@ package sat
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -26,13 +25,13 @@ func DIMACS(r io.Reader) (CNF, error) {
 			if capVar, err := strconv.Atoi(problem[2]); err != nil {
 				return cnf, err
 			} else {
-				fmt.Println("Number of variables", capVar)
+				// fmt.Println("Number of variables", capVar)
 				tmpCl = make(Clause, 0, capVar)
 			}
 			if capCl, err := strconv.Atoi(problem[3]); err != nil {
 				return cnf, err
 			} else {
-				fmt.Println("Number of clauses", capCl)
+				// fmt.Println("Number of clauses", capCl)
 				cnf = make(CNF, 0, capCl)
 			}
 		case tmpCl != nil:
