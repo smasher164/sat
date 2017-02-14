@@ -58,27 +58,41 @@ func (c CNF) clone() CNF {
 	return to
 }
 
-func DPLL(formula CNF) bool {
+func DPLL(formula CNF, trail map[Literal]bool) (bool, map[Literal]bool) {
 	// empty formula
 	if len(formula) == 0 {
-		return true
+		return true, trail
 	}
 	for i := range formula {
 		// empty clause
 		if len(formula[i]) == 0 {
-			return false
+			return false, trail
 		}
 		// unit propagation
 		if len(formula[i]) == 1 {
-			return DPLL(Simplify(formula, formula[i][0]))
+			// get literal from unit clause
+			l := formula[i][0]
+			// ensure only one representation of literal in trail
+			delete(trail, not(l))
+			trail[l] = true
+			return DPLL(Simplify(formula, l), trail)
 		}
 	}
-	if v := formula[0][0]; DPLL(Simplify(formula, v)) {
-		return true
+	// choose literal for unit propagation, and greedily store in trail
+	l := formula[0][0]
+	trail[l] = true
+	if truth, trail := DPLL(Simplify(formula, l), trail); truth {
+		return true, trail
 	} else {
-		v.Truth = !v.Truth
-		return DPLL(Simplify(formula, v))
+		delete(trail, l)
+		l.Truth = !l.Truth
+		trail[l] = true
+		return DPLL(Simplify(formula, l), trail)
 	}
+}
+
+func not(l Literal) Literal {
+	return Literal{l.Ident, !l.Truth}
 }
 
 func Simplify(formula CNF, p Literal) CNF {
