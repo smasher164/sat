@@ -1,4 +1,4 @@
-package sat
+package sat_test
 
 import (
 	"log"
@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/smasher164/sat"
 )
 
 const (
@@ -13,7 +15,7 @@ const (
 )
 
 type fCNF struct {
-	cnf      CNF
+	cnf      sat.CNF
 	filename string
 }
 
@@ -44,7 +46,7 @@ func tofCNF(fpaths []string) []fCNF {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		cnf, err := DIMACS(fr)
+		cnf, err := sat.DIMACS(fr)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -54,10 +56,10 @@ func tofCNF(fpaths []string) []fCNF {
 	return testfCNFs
 }
 
-func cdpll(formula CNF, ch chan<- bool, stop <-chan struct{}) {
+func cdpll(formula sat.CNF, ch chan<- bool, stop <-chan struct{}) {
 	cdpll_1 := func() bool {
-		trail := make(map[Literal]bool)
-		res, _ := DPLL(formula, trail)
+		trail := make(map[sat.Literal]bool)
+		res, _ := sat.DPLL(formula, trail)
 		return res
 	}
 	select {
