@@ -16,7 +16,11 @@ type Clause []Literal
 // structured as clauses AND'ed together, like (a ∨ b) ∧ (b ∨ ¬c).
 type CNF []Clause
 
-func (l Literal) String() string {
+type StringDumper interface {
+	DumpString() string
+}
+
+func (l Literal) DumpString() string {
 	s := ""
 	if !l.Truth {
 		s += "¬"
@@ -25,24 +29,24 @@ func (l Literal) String() string {
 	return s
 }
 
-func (c Clause) String() string {
+func (c Clause) DumpString() string {
 	s := "("
 	if len(c) > 0 {
 		s += c[0].String()
 	}
 	for i := 1; i < len(c); i++ {
-		s += " v " + c[i].String()
+		s += " v " + c[i].DumpString()
 	}
 	s += ")"
 	return s
 }
 
-func (c CNF) String() string {
+func (c CNF) DumpString() string {
 	var s string
 	if len(c) > 0 {
 		s = c[0].String()
 		for i := 1; i < len(c); i++ {
-			s += " ∧ " + c[i].String()
+			s += " ∧ " + c[i].DumpString()
 		}
 	}
 	return s
