@@ -58,7 +58,7 @@ func tofCNF(fpaths []string) []fCNF {
 
 func cdpll(formula sat.CNF, ch chan<- bool, stop <-chan struct{}) {
 	cdpll_1 := func() bool {
-		trail := make(map[sat.Literal]bool)
+		trail := []sat.Literal{}
 		res, _ := sat.DPLL(formula, trail)
 		return res
 	}

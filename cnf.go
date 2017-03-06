@@ -32,7 +32,7 @@ func (l Literal) DumpString() string {
 func (c Clause) DumpString() string {
 	s := "("
 	if len(c) > 0 {
-		s += c[0].String()
+		s += c[0].DumpString()
 	}
 	for i := 1; i < len(c); i++ {
 		s += " v " + c[i].DumpString()
@@ -44,7 +44,7 @@ func (c Clause) DumpString() string {
 func (c CNF) DumpString() string {
 	var s string
 	if len(c) > 0 {
-		s = c[0].String()
+		s = c[0].DumpString()
 		for i := 1; i < len(c); i++ {
 			s += " ∧ " + c[i].DumpString()
 		}
@@ -62,7 +62,14 @@ func (c CNF) clone() CNF {
 	return to
 }
 
-func DPLL(formula CNF, trail map[Literal]bool) (bool, map[Literal]bool) {
+func sliceLast(trail []Literal) []Literal {
+	if len(trail) == 0 {
+		return trail
+	}
+	return trail[:len(trail)-1]
+}
+
+func DPLL(formula CNF, trail []Literal) (bool, []Literal) {
 	// empty formula
 	if len(formula) == 0 {
 		return true, trail
@@ -77,20 +84,20 @@ func DPLL(formula CNF, trail map[Literal]bool) (bool, map[Literal]bool) {
 			// get literal from unit clause
 			l := formula[i][0]
 			// ensure only one representation of literal in trail
-			delete(trail, not(l))
-			trail[l] = true
+			trail = sliceLast(trail)
+			trail = append(trail, l)
 			return DPLL(Simplify(formula, l), trail)
 		}
 	}
 	// choose literal for unit propagation, and greedily store in trail
 	l := formula[0][0]
-	trail[l] = true
+	trail = append(trail, l)
 	if truth, trail := DPLL(Simplify(formula, l), trail); truth {
 		return true, trail
 	} else {
-		delete(trail, l)
+		trail = sliceLast(trail)
 		l.Truth = !l.Truth
-		trail[l] = true
+		trail = append(trail, l)
 		return DPLL(Simplify(formula, l), trail)
 	}
 }

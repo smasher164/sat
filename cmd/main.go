@@ -8,9 +8,9 @@ import (
 	"github.com/smasher164/sat"
 )
 
-func dumpTrail(trail map[sat.Literal]bool) {
-	for l, _ := range trail {
-		fmt.Printf("%s ", l)
+func dumpTrail(trail []sat.Literal) {
+	for i := range trail {
+		fmt.Printf("%s ", trail[i].DumpString())
 	}
 	fmt.Println()
 }
@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	trail := make(map[sat.Literal]bool)
+	trail := []sat.Literal{}
 	res, trail := sat.DPLL(cnf, trail)
 	fmt.Println(res)
 	dumpTrail(trail)
