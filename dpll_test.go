@@ -58,8 +58,7 @@ func tofCNF(fpaths []string) []fCNF {
 
 func cdpll(formula sat.CNF, ch chan<- bool, stop <-chan struct{}) {
 	cdpll_1 := func() bool {
-		trail := []sat.Literal{}
-		res, _ := sat.DPLL(formula, trail)
+		res, _ := sat.DPLL(formula)
 		return res
 	}
 	select {
@@ -71,10 +70,10 @@ func cdpll(formula sat.CNF, ch chan<- bool, stop <-chan struct{}) {
 func TestDPLL(t *testing.T) {
 	testfCNFs := tofCNF(fpaths())
 
-	t.Parallel()
 	for _, fcnf := range testfCNFs {
 		fcnf := fcnf
 		t.Run(fcnf.filename, func(t *testing.T) {
+			t.Parallel()
 			// defer func(filename string) {
 			// 	if r := recover(); r != nil {
 			// 		t.Errorf("panic: calling DPLL() for %v\n", filename)

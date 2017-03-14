@@ -1,7 +1,5 @@
 package sat
 
-import "strconv"
-
 // A Literal is represented by an identifier (int) and a truth value (bool).
 type Literal struct {
 	Ident int
@@ -16,42 +14,6 @@ type Clause []Literal
 // structured as clauses AND'ed together, like (a ∨ b) ∧ (b ∨ ¬c).
 type CNF []Clause
 
-type StringDumper interface {
-	DumpString() string
-}
-
-func (l Literal) DumpString() string {
-	s := ""
-	if !l.Truth {
-		s += "¬"
-	}
-	s += strconv.Itoa(l.Ident)
-	return s
-}
-
-func (c Clause) DumpString() string {
-	s := "("
-	if len(c) > 0 {
-		s += c[0].DumpString()
-	}
-	for i := 1; i < len(c); i++ {
-		s += " v " + c[i].DumpString()
-	}
-	s += ")"
-	return s
-}
-
-func (c CNF) DumpString() string {
-	var s string
-	if len(c) > 0 {
-		s = c[0].DumpString()
-		for i := 1; i < len(c); i++ {
-			s += " ∧ " + c[i].DumpString()
-		}
-	}
-	return s
-}
-
 // Makes a deep copy of the CNF
 func (c CNF) clone() CNF {
 	to := make(CNF, len(c), cap(c))
@@ -62,43 +24,68 @@ func (c CNF) clone() CNF {
 	return to
 }
 
-func sliceLast(trail []Literal) []Literal {
-	if len(trail) == 0 {
-		return trail
-	}
-	return trail[:len(trail)-1]
+type solver struct {
+	formula CNF
+	res     map[Literal]bool
+	sat     bool
 }
 
-func DPLL(formula CNF, trail []Literal) (bool, []Literal) {
-	// empty formula
-	if len(formula) == 0 {
-		return true, trail
+func DPLL(formula CNF) (bool, []Literal) {
+	s := &solver{
+		formula: formula,
+		res:     make(map[Literal]bool),
 	}
-	for i := range formula {
+	s.dpll()
+
+	keys := make([]Literal, len(s.res))
+	i := 0
+	for k := range s.res {
+		keys[i] = k
+		i++
+	}
+	return s.sat, keys
+}
+
+func (s *solver) dpll() {
+	// empty formula
+	if len(s.formula) == 0 {
+		s.sat = true
+		return
+	}
+	for i := range s.formula {
 		// empty clause
-		if len(formula[i]) == 0 {
-			return false, trail
+		if len(s.formula[i]) == 0 {
+			s.sat = false
+			return
 		}
 		// unit propagation
-		if len(formula[i]) == 1 {
+		if len(s.formula[i]) == 1 {
 			// get literal from unit clause
-			l := formula[i][0]
-			// ensure only one representation of literal in trail
-			trail = sliceLast(trail)
-			trail = append(trail, l)
-			return DPLL(Simplify(formula, l), trail)
+			l := s.formula[i][0]
+			// update the value of the literal in the result
+			delete(s.res, not(l))
+			s.res[l] = true
+			s.simplify(l)
+			s.dpll()
+			return
 		}
 	}
-	// choose literal for unit propagation, and greedily store in trail
-	l := formula[0][0]
-	trail = append(trail, l)
-	if truth, trail := DPLL(Simplify(formula, l), trail); truth {
-		return true, trail
+	// choose literal for unit propogation, and greedily store in res
+	l := s.formula[0][0]
+	s.res[l] = true
+	fcopy := s.formula.clone()
+	s.simplify(l)
+	if s.dpll(); s.sat {
+		return
 	} else {
-		trail = sliceLast(trail)
+		// fmt.Printf("l: %v, last: %v\n", l, s.res[len(s.res)-1])
+		delete(s.res, l)
+		s.formula = fcopy
 		l.Truth = !l.Truth
-		trail = append(trail, l)
-		return DPLL(Simplify(formula, l), trail)
+		s.res[l] = true
+		s.simplify(l)
+		s.dpll()
+		return
 	}
 }
 
@@ -106,21 +93,19 @@ func not(l Literal) Literal {
 	return Literal{l.Ident, !l.Truth}
 }
 
-func Simplify(formula CNF, p Literal) CNF {
-	f := formula.clone()
-	for i := 0; i < len(f); i++ {
-		for j := 0; i >= 0 && j < len(f[i]); j++ {
-			if f[i][j].Ident == p.Ident {
-				if f[i][j].Truth == p.Truth {
+func (s *solver) simplify(p Literal) {
+	for i := 0; i < len(s.formula); i++ {
+		for j := 0; i >= 0 && j < len(s.formula[i]); j++ {
+			if s.formula[i][j].Ident == p.Ident {
+				if s.formula[i][j].Truth == p.Truth {
 					// delete clause
 					i--
-					f = append(f[:i+1], f[i+2:]...)
+					s.formula = append(s.formula[:i+1], s.formula[i+2:]...)
 				} else {
 					// delete element
-					f[i] = append(f[i][:j], f[i][j+1:]...)
+					s.formula[i] = append(s.formula[i][:j], s.formula[i][j+1:]...)
 				}
 			}
 		}
 	}
-	return f
 }

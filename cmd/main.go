@@ -8,7 +8,7 @@ import (
 	"github.com/smasher164/sat"
 )
 
-func dumpTrail(trail []sat.Literal) {
+func dumpRes(trail []sat.Literal) {
 	for i := range trail {
 		fmt.Printf("%s ", trail[i].DumpString())
 	}
@@ -20,8 +20,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	trail := []sat.Literal{}
-	res, trail := sat.DPLL(cnf, trail)
-	fmt.Println(res)
-	dumpTrail(trail)
+	sol, res := sat.DPLL(cnf)
+	fmt.Println(sol)
+	dumpRes(res)
 }
